@@ -20,9 +20,18 @@ The quiz file must be in .csv format with the corresponding columns in order:
 | ------------- | ------------- | ----------------------- | ------------- | 
 | string        | string        | space separated strings | int           |
 
-See quiz samples in `/data`
+See quiz samples in `/sample`
 
 ## Run
 ```bash
 quiz path/to/quiz/file
 ```
+# Screenshots
+## Running quiz in the terminal
+![Quiz](./img/sample-sc.png "Running quiz in terminal")
+![Review](./img/sample-sc1.png "Running quiz in terminal")
+
+## Sample CSV File
+![CSV](./img/sample-csv.png "Sample CSV file")
+
+
