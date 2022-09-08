@@ -1,0 +1,6 @@
+﻿questions,answers,keywords,minmatch
+What is data communications?,Exchange of data between two devices via some transmission medium such as a wire cable,exchange data between devices transmission medium wire cable,4
+What makes a data communication effective?,Delivery Accuracy Timeliness Jitter,delivery accuracy timeliness jitter,4
+What are the components of a data communications?,Message Sender Receiver Transmission Medium Protocol,Message Sender Receiver Medium Protocol,5
+What are the forms of data?,Text Image Audio Video,Text Image Audio Video,4
+What are the types of data flow?,Simplex Half-duplex Duplex,Simplex Half-duplex Duplex,3

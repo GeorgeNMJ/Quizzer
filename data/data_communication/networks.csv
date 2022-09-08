@@ -1,0 +1,16 @@
+﻿questions,answers,keywords,minmatch
+What is distributed processing?,Dividing process among multiple computers,divide process among multiple computers,4
+Name three categories of networks,"PAN, LAN, CAN, MAN, and WAN",PAN LAN CAN MAN WAN,3
+Name the network models,OSI and Internet,OSI Internet,2
+What are the physical structures of networks?,Types of connection and Physical Topology,type connection physical topology,3
+What are the types of connections?,point to point and multipoint,point-point to point multipoint multi-point,3
+A type of connection wherein the link is reserved between two devices.,point to point connection,point to point-point,1
+A type of connection wherein the link is shared between multiple devices,multipoint,multipoint multi-point,1
+Other name for devices in a network,node,node,1
+Name the physical topologies,"Mesh, Star, Bus, Ring, and Hybrid",mesh star bus ring hybrid,5
+What is a ring topology composed of?,"Node or Device, Repeater, and Link",node device repeater link,3
+What is a bus topology composed of?,"Droplines, Tap, Terminators, Node or Device",dropline tap terminator device node,4
+What is a star topology composed of?,"A hub, link, and devices or nodes",hub devices nodes,3
+What is a mesh topology composed of?,Devices and links,devices links,2
+Is a ring topology bidirectional or unidirectional?,unidirectional,unidirectional,1
+What is the formula for the number of connections in a duplex mesh topology? (Do not add whitespaces to the formula),n(n-1)/2,n(n-1)/2,1
