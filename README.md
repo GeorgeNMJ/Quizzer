@@ -9,7 +9,9 @@ CLI quizzer tool. Made to help me with my studies. I added some sample quizzes i
 - Linux (bash)
 ```bash
 # add this to your .bashrc file
-export PATH=$PATH:directory/of/the/script
+# change file permission of the script first
+chmod +x path/to/quiz
+export PATH=$PATH:path/to/quiz
 ```
 ## Create a quiz file
 The quiz file must be in .csv format with the corresponding columns in order:
