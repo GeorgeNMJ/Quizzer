@@ -13,8 +13,7 @@ export PATH=$PATH:directory/of/the/script
 ```
 ## Create a quiz file
 The quiz file must be in .csv format with the corresponding columns in order:
-|*questions*| *answers* | *keywords* | *minmatch*|
-|
+
 | questions     |    answers    |        keywords         |    minmatch   |
 | ------------- | ------------- | ----------------------- | ------------- | 
 | string        | string        | space separated string  |           int |
