@@ -6,6 +6,7 @@ import re
 import getopt
 import csv
 
+
 class Quizzer:
     help_ = """
 NAME
@@ -152,6 +153,7 @@ OPTIONS
                 print("\n")
             self.u_answers.append(ans)
         self._validate_answers()
+        self.score()
 
     def _clean_text(self, text: str):
         return re.sub(r'[\.,\'=\*]', '', text)
@@ -171,17 +173,15 @@ OPTIONS
             # consider correct if kw count is gte minmatch
             self.marks.append(count >= mm)
 
-    # possible additional methods
     def score(self):
-        # placeholder
         print(f"You got {sum(self.marks)} out of {self.items}")
 
     def cheat_sheet(self):
         print("======================= Cheat Sheet =======================")
-        for q, a, kw in zip(self.questions, self.u_answers, self.keywords):
-            print(f"Question: \n\t{q}")
-            print(f"Answer: {a}")
-            print(f"Keyword/s: {kw}")
+        for q, a, kw, in zip(self.questions, self.answers, self.keywords):
+            print(f"Question:\n\t{q}")
+            print(f"Answer:\n\t{a}")
+            print(f"Keywords:\n\t{kw}\n")
 
     def review(self):
         """
@@ -195,20 +195,27 @@ OPTIONS
             print(f"\t{a}")
 
 
+def clear():
+    if os.name == 'nt':
+        _ = os.system('cls')
+    else:
+        _ = os.system('clear')
+
+
 if __name__ == '__main__':
     quizzer = Quizzer(sys.argv)
 
     while (True):
         quizzer.start()
-        quizzer.score()
 
         review = input("Do you want to review your answers? [Y/n]: ").strip()
         if not review or review in ['Y', 'y']:
             quizzer.review()
 
-        again = input("Do you want to take the test again? [Y/n]: ").strip()
-        if not again or again in ['Y', 'y']:
+        again = input("Do you want to take the test again? [y/N]: ").strip()
+        if again in ['y', 'Y']:
             quizzer.reset()
             # clear screen
+            clear()
         else:
             break
