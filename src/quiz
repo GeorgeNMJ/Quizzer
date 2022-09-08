@@ -5,6 +5,7 @@ import glob
 import re
 import getopt
 import csv
+import random
 
 
 class Quizzer:
@@ -91,6 +92,8 @@ OPTIONS
         self._parse_opts(opts)
         self._parse_args(args)
 
+        if self.opts["shuffle"]:
+            self._shuffle()
         if self.opts["cheat"] == 3:
             self.cheat_sheet()
 
@@ -159,7 +162,12 @@ OPTIONS
         return re.sub(r'[\.,\'=\*]', '', text)
 
     def _shuffle(self):
-        pass
+        shuffled = list(
+            zip(self.questions, self.answers, self.keywords, self.minmatch))
+        random.shuffle(shuffled)
+        q, a, kw, mm = zip(*shuffled)
+        self.questions, self.answers = list(q), list(a)
+        self.keywords, self.minmatch = list(kw), list(mm)
 
     # validate answers:
     def _validate_answers(self):
@@ -212,7 +220,7 @@ if __name__ == '__main__':
         if not review or review in ['Y', 'y']:
             quizzer.review()
 
-        again = input("Do you want to take the test again? [y/N]: ").strip()
+        again = input("Do you want to take the quiz again? [y/N]: ").strip()
         if again in ['y', 'Y']:
             quizzer.reset()
             # clear screen
