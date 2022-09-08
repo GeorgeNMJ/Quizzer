@@ -6,11 +6,13 @@ CLI quizzer tool. Made to help me with my studies. I added some sample quizzes i
 
 # Usage
 ## Add script to path
-- Linux (bash)
+### Linux (bash)
+- Change file permission first
 ```bash
-# add this to your .bashrc file
-# change file permission of the script first
 chmod +x path/to/quiz
+```
+- Add script to path (.bashrc)
+```bash
 export PATH=$PATH:path/to/quiz
 ```
 ## Create a quiz file
