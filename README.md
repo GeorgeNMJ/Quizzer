@@ -16,7 +16,8 @@ The quiz file must be in .csv format with the corresponding columns in order:
 
 | questions     |    answers    |        keywords         |    minmatch   |
 | ------------- | ------------- | ----------------------- | ------------- | 
-| string        | string        | space separated string  |           int |
+| string        | string        | space separated strings | int           |
+
 See quiz samples in `/data`
 
 ## Run
