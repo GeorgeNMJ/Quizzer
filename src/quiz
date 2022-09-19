@@ -1,207 +1,112 @@
 #!/usr/bin/env python
-import os
-import sys
-import glob
-import re
-import getopt
+import argparse
 import csv
+import os
+import glob
 import random
+import re
 
+def parse_arguments():
+    """Read arguments from the command line"""
+    parser = argparse.ArgumentParser(
+            description='Take a quiz from .csv files',
+            epilog='AUTHOR: George N. Morales Jr.')
 
-class Quizzer:
-    help_ = """
-NAME
-    quiz - take a quiz
+    parser.add_argument(
+            '-r', '--recursive', 
+            action='store_true',
+            help='search for .csv files recursively if directory is provided')
+    parser.add_argument(
+            '-s', '--shuffle', 
+            action='store_true',
+            help='shuffle questions')
+    parser.add_argument(
+            '-c', '--cheat', 
+            type=int,
+            default=0,
+            choices=[0,1,2],
+            help='include a cheat while taking the quiz.')
+    parser.add_argument(
+            'paths',
+            nargs='+',
+            metavar='FILENAME/DIRECTORY',
+            help='Path to .csv file, if directory is provided will read all .csv files in that directory and combine them.'
+            )
+    return parser.parse_args()
 
-SYNOPSIS
-    quiz [OPTION] FILENAME/DIRECTORY
-
-DESCRIPTION
-    Quizzer cli script that turns CSV file into a quiz. The CSV file must contain (questions, answers, keywords, minmatch) columns in order followed by their respective values in the proceeding rows.
+def parse_file(path):
+    with open(path, 'r') as f:
+        lines = csv.reader(f.readlines())
+    return lines
     
-    directory:
-        if directory is provided looks for .csv files. You can provide more than one directory
-    filename:
-        filename must be .csv. You can provide more than one filenames
-    -r, --recursive
-    -s, --shuffle
-    -c, --cheat=LEVEL
-        0 (Default) do not provide cheat
-        1 provide answer
-        2 provide answer and keywords
-        3 print all answers and keywords at once
-    -h, --help
-        display this help and exit
-AUTHOR
-    Written by George N. Morales Jr.
+def find_csv(directory, recurse:bool):
+    # references:https://www.geeksforgeeks.org/python-list-files-in-a-directory/
+    return [f for f in glob.iglob(directory + '**', recursive=recurse) 
+            if f.endswith('.csv')]
+
+def consolidate_data(data, path:str):
+    for i, (q, a, kw, mm) in enumerate(parse_file(path)):
+        if i == 0:
+            continue
+        data["questions"].append(q)
+        data["answers"].append(a)
+        data["keywords"].append(kw.lower().split())
+        data["minmatch"].append(int(mm))
+    return data
+def shuffle_data(data:dict):
+    shuffled = list(
+        zip(data["questions"], data["answers"], 
+            data["keywords"], data["minmatch"]))
+    random.shuffle(shuffled)
+    q, a, kw, mm = zip(*shuffled)
+    data["questions"], data["answers"] = list(q), list(a)
+    data["keywords"], data["minmatch"] = list(kw), list(mm)
+    
+    return data
+
+def quiz(data:dict, cheat:int):
+    print("======================= Quiz Start! =======================")
+    answers = []
+    for i, question in enumerate(data["questions"]):
+        print(f"Question {i+1} of {len(data['questions'])}:\n\t{question}\n")
+        if cheat == 2:
+            print(f"Answer: {data['answers'][i]}\n")
+            print(f"Keywords: {data['keywords'][i]}\n")
+        elif cheat == 1:
+            print(f"Answer: {data['answers'][i]}\n")
+        ans = ""
+        while (not ans):
+            ans = input("Answer: \n").lower().strip()
+            print("\n")
+        answers.append(ans)
+    return answers
+
+def validate_answers(answers:list, keywords:list, minmatch:list):
+    marks = []
+    for answer, kw, mm in zip(answers, keywords, minmatch):
+        count = sum([
+            word in kw
+            for word in set(clean_text(answer).lower().split())
+        ])
+
+        # consider correct if kw count is gte minmatch
+        marks.append(count >= mm)
+        
+    return marks, sum(marks)
+
+def clean_text(text:str):
+    return re.sub(r'[\.,\'=\*]', '', text)
+
+def review_answers(questions:list, answers:list, marks:list):
+    """
+    Display questions and user answers along with remarks(correct or wrong).
     """
 
-    help_err = """Usage: quiz [OPTION] FILENAME ...
-   or: quiz [OPTION] DIRECTORY ...
-   or: quiz [OPTION] FILENAME ... DIRECTORY ...
-
-Creates a quizzer in terminal for .csv file(s)
-
-Mandatory arguments to long options are mandatory for short options too.
-
-OPTIONS
-   -r, --recursive search for CSV files in directory and subdirectories
-   -c, --cheat=LEVEL provide answers with the quiz
-   -s, --shuffle shuffle questions
-
-   -h, --help
-        display this help and exit
-    """
-
-    def __init__(self, argv: list):
-        # pano kaya to
-        if ('--help' in argv or '-h' in argv) and len(argv) > 2:
-            print(Quizzer.help_err)
-            sys.exit()
-        self.argv = argv[1:]
-        self.questions = []
-        self.answers = []
-        self.keywords = []
-        self.minmatch = []
-        self.u_answers = []
-        self.items = 0
-        self.marks = []
-        self.opts = {
-            "recurse": False,
-            "cheat": 0,
-            "help": False,
-            "shuffle": False
-        }
-
-        self._parse_argv()
-
-    def _parse_argv(self):
-        try:
-            # cheat could be 0: False, 1: show answer with questions 2: show keywords 3: print cheat sheet at start
-            opts, args = getopt.getopt(
-                self.argv, "hrc:s", ["help", "recursive", "cheat=", "shuffle"])
-        except:
-            # help does not work make it work
-            print(Quizzer.help_)
-            sys.exit()
-
-        if not args:
-            print(Quizzer.help_)
-            sys.exit()
-
-        self._parse_opts(opts)
-        self._parse_args(args)
-
-        if self.opts["shuffle"]:
-            self._shuffle()
-        if self.opts["cheat"] == 3:
-            self.cheat_sheet()
-
-    def _parse_opts(self, opts: list):
-        for opt, val in opts:
-            if opt in ['-r', '--recursive']:
-                self.opts["recurse"] = True
-            elif opt in ['-c', '--cheat']:
-                self.opts["cheat"] = int(val)
-            elif opt in ['-h', '--help']:
-                self.opts["help"] = True
-            elif opt in ['-s', '--shuffle']:
-                self.opts["shuffle"] = True
-
-    def _parse_args(self, args: list):
-        for path in args:
-            if os.path.isfile(path):
-                self._parse_file(path)
-            elif os.path.isdir(path):
-                self._parse_dir(path)
-        self.items = len(self.questions)
-
-    def _parse_file(self, path: str):
-        with open(path, 'r') as f:
-            lines = csv.reader(f.readlines())
-
-        # csv is four columns
-        # questions, answers, keywords, minmatch
-        for i, (q, a, kw, mm) in enumerate(lines):
-            # ignore header
-            if i == 0:
-                continue
-            self.questions.append(q)
-            self.answers.append(a)
-            self.keywords.append(kw.lower().split())
-            self.minmatch.append(int(mm))
-
-    def reset(self):
-        self.u_answers = []
-        self.marks = []
-
-    def _parse_dir(self, path: str):
-        # references:https://www.geeksforgeeks.org/python-list-files-in-a-directory/
-        for filename in glob.iglob(path + '**/*.csv',
-                                   recursive=self.opts["recurse"]):
-            self._parse_file(filename)
-
-    def start(self):
-        print("======================= Quiz Start! =======================")
-        for i, question in enumerate(self.questions):
-            print(f"Question {i+1} of {self.items}:\n\t{question}\n")
-            if self.opts["cheat"] == 2:
-                print(f"Answer: {self.answers[i]}\n")
-                print(f"Keywords: {self.keywords[i]}\n")
-            elif self.opts["cheat"] == 1:
-                print(f"Answer: {self.answers[i]}\n")
-            ans = ""
-            while (not ans):
-                ans = input("Answer: \n").lower().strip()
-                print("\n")
-            self.u_answers.append(ans)
-        self._validate_answers()
-        self.score()
-
-    def _clean_text(self, text: str):
-        return re.sub(r'[\.,\'=\*]', '', text)
-
-    def _shuffle(self):
-        shuffled = list(
-            zip(self.questions, self.answers, self.keywords, self.minmatch))
-        random.shuffle(shuffled)
-        q, a, kw, mm = zip(*shuffled)
-        self.questions, self.answers = list(q), list(a)
-        self.keywords, self.minmatch = list(kw), list(mm)
-
-    # validate answers:
-    def _validate_answers(self):
-        for u_answer, keyword, mm in zip(self.u_answers, self.keywords,
-                                         self.minmatch):
-            count = sum([
-                word in keyword
-                for word in set(self._clean_text(u_answer).lower().split())
-            ])
-
-            # consider correct if kw count is gte minmatch
-            self.marks.append(count >= mm)
-
-    def score(self):
-        print(f"You got {sum(self.marks)} out of {self.items}")
-
-    def cheat_sheet(self):
-        print("======================= Cheat Sheet =======================")
-        for q, a, kw, in zip(self.questions, self.answers, self.keywords):
-            print(f"Question:\n\t{q}")
-            print(f"Answer:\n\t{a}")
-            print(f"Keywords:\n\t{kw}\n")
-
-    def review(self):
-        """
-        Display questions and user answers along with remarks(correct or wrong).
-        """
-
-        print("======================= Quiz Review =======================")
-        for q, a, mark in zip(self.questions, self.u_answers, self.marks):
-            print(f"Question: \n\t{q}")
-            print(f"Answer: ({'Correct' if mark else 'Wrong'})")
-            print(f"\t{a}")
-
+    print("======================= Quiz Review =======================")
+    for q, a, mark in zip(questions, answers, marks):
+        print(f"Question: \n\t{q}")
+        print(f"Answer: ({'Correct' if mark else 'Wrong'})")
+        print(f"\t{a}\n")
 
 def clear():
     if os.name == 'nt':
@@ -209,21 +114,56 @@ def clear():
     else:
         _ = os.system('clear')
 
+def show_result(score:int, items:int):
+    print("======================= Result =======================")
+    print(f"You got {score} out of {items}")
 
-if __name__ == '__main__':
-    quizzer = Quizzer(sys.argv)
+def main():
+    # get the files
+    args = parse_arguments()
+    data = {
+            "questions": [],
+            "answers": [],
+            "keywords": [],
+            "minmatch": []
+            }
 
+    for path in args.paths:
+        # check if directory is provided
+        if os.path.isdir(path):
+            csvs = find_csv(path, args.recursive)
+            for csv in csvs:
+                data = consolidate_data(data, csv)
+        else:
+            data = consolidate_data(data, path)
+
+    if args.shuffle:
+        data = shuffle_data(data)
+
+    # ask the questions
     while (True):
-        quizzer.start()
+        answers = quiz(data, args.cheat)
+        marks, score = validate_answers(
+                answers, 
+                data['keywords'], 
+                data['minmatch'])
 
+    # show result
+        show_result(score, len(data['questions']))
+
+    # review?
         review = input("Do you want to review your answers? [Y/n]: ").strip()
         if not review or review in ['Y', 'y']:
-            quizzer.review()
+           review_answers(data['questions'], answers, marks)
 
+    # again? 
         again = input("Do you want to take the quiz again? [y/N]: ").strip()
         if again in ['y', 'Y']:
-            quizzer.reset()
             # clear screen
             clear()
         else:
             break
+
+if __name__ == '__main__':
+    main()
+
